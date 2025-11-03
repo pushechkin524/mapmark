@@ -16,6 +16,23 @@
       background-color: #f4f4f4;
     }
 
+    /* Шапка */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(6px);
+      text-align: center;
+      font-weight: 500;
+      font-size: 16px;
+      padding: 8px 0;
+      z-index: 1000;
+      color: #333;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
     #map {
       height: 100%;
       width: 100%;
@@ -76,11 +93,16 @@
       .popup-form button {
         font-size: 16px;
       }
+      header {
+        font-size: 14px;
+        padding: 6px 0;
+      }
     }
   </style>
 </head>
 
 <body>
+  <header>©️ Студенческий Совет | Пушкин Илья</header>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
