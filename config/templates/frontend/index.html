@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MapMarks — карта с метками</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Стили для формы */
+    .popup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 230px;
+      font-size: 15px;
+    }
+
+    .popup-form input[type="text"],
+    .popup-form textarea {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    .popup-form button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .popup-form button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Фото в попапе */
+    .marker-photo {
+      display: block;
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+
+    /* Для мобильных — форма растягивается */
+    @media (max-width: 600px) {
+      .leaflet-popup-content-wrapper {
+        width: 90vw !important;
+      }
+      .popup-form {
+        width: 100%;
+        font-size: 16px;
+      }
+      .popup-form input,
+      .popup-form textarea,
+      .popup-form button {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const apiUrl = "http://127.0.0.1:8000/api/markers/";
+
+    const map = L.map("map").setView([55.751244, 37.618423], 11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+
+    // Загружаем метки
+    async function loadMarkers() {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      data.forEach((m) => {
+        const marker = L.marker([m.latitude, m.longitude]).addTo(map);
+        let html = `<b>${m.title || ""}</b><p>${m.description || ""}</p>`;
+        m.photos.forEach(
+          (p) =>
+            (html += `<img src="${p.image}" class="marker-photo" loading="lazy">`)
+        );
+        marker.bindPopup(html);
+      });
+    }
+    loadMarkers();
+
+    // Добавляем метку при клике
+    map.on("click", (e) => {
+      const { lat, lng } = e.latlng;
+      const popupHtml = `
+        <form class="popup-form" id="marker-form">
+          <input type="text" name="title" placeholder="Название">
+          <textarea name="description" placeholder="Описание"></textarea>
+          <input type="file" name="images" multiple accept="image/*">
+          <button type="submit">Добавить метку</button>
+        </form>
+      `;
+      const popup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
+
+      setTimeout(() => {
+        const form = document.getElementById("marker-form");
+        if (!form) return;
+        form.addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+
+          const formData = new FormData(form);
+          formData.append("latitude", lat);
+          formData.append("longitude", lng);
+          const files = form.querySelector("input[type=file]").files;
+          for (let i = 0; i < files.length && i < 3; i++) {
+            formData.append("images", files[i]);
+          }
+
+          const resp = await fetch(apiUrl, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (resp.ok) {
+            map.closePopup();
+            loadMarkers();
+          } else {
+            alert("Ошибка при добавлении метки");
+          }
+        });
+      }, 150);
+    });
+  </script>
+</body>
+</html>
