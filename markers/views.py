@@ -15,7 +15,7 @@ from django.views.generic import TemplateView
 from django.http import HttpResponseForbidden
 
 class SecretAdminView(TemplateView):
-    template_name = 'admin_map.html'
+    template_name = 'frontend/admin_map.html'
 
     def dispatch(self, request, *args, **kwargs):
         key = request.GET.get('key')
