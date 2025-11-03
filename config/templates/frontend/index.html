@@ -71,14 +71,6 @@
       background-color: #0056b3;
     }
 
-    /* Фото в попапе */
-    .marker-photo {
-      display: block;
-      max-width: 100%;
-      border-radius: 6px;
-      margin-top: 5px;
-    }
-
     /* Для мобильных — форма растягивается */
     @media (max-width: 600px) {
       .leaflet-popup-content-wrapper {
@@ -107,37 +99,38 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
+    // URL API твоего бэкенда (на Render)
     const apiUrl = "https://mapmark.onrender.com/api/markers/";
 
+    // Инициализация карты
     const map = L.map("map").setView([55.751244, 37.618423], 11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap",
     }).addTo(map);
 
-    // Загружаем метки
+    // Функция загрузки всех меток
     async function loadMarkers() {
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      data.forEach((m) => {
-        const marker = L.marker([m.latitude, m.longitude]).addTo(map);
-        let html = `<b>${m.title || ""}</b><p>${m.description || ""}</p>`;
-        m.photos.forEach(
-          (p) =>
-            (html += `<img src="${p.image}" class="marker-photo" loading="lazy">`)
-        );
-        marker.bindPopup(html);
-      });
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        data.forEach((m) => {
+          const marker = L.marker([m.latitude, m.longitude]).addTo(map);
+          const html = `<b>${m.title || ""}</b><p>${m.description || ""}</p>`;
+          marker.bindPopup(html);
+        });
+      } catch (err) {
+        console.error("Ошибка загрузки меток:", err);
+      }
     }
     loadMarkers();
 
-    // Добавляем метку при клике
+    // Добавляем метку при клике на карту
     map.on("click", (e) => {
       const { lat, lng } = e.latlng;
       const popupHtml = `
         <form class="popup-form" id="marker-form">
           <input type="text" name="title" placeholder="Название">
           <textarea name="description" placeholder="Описание"></textarea>
-          <input type="file" name="images" multiple accept="image/*">
           <button type="submit">Добавить метку</button>
         </form>
       `;
@@ -152,21 +145,21 @@
           const formData = new FormData(form);
           formData.append("latitude", lat);
           formData.append("longitude", lng);
-          const files = form.querySelector("input[type=file]").files;
-          for (let i = 0; i < files.length && i < 3; i++) {
-            formData.append("images", files[i]);
-          }
 
-          const resp = await fetch(apiUrl, {
-            method: "POST",
-            body: formData,
-          });
+          try {
+            const resp = await fetch(apiUrl, {
+              method: "POST",
+              body: formData,
+            });
 
-          if (resp.ok) {
-            map.closePopup();
-            loadMarkers();
-          } else {
-            alert("Ошибка при добавлении метки");
+            if (resp.ok) {
+              map.closePopup();
+              loadMarkers();
+            } else {
+              alert("Ошибка при добавлении метки");
+            }
+          } catch (err) {
+            alert("Ошибка подключения к серверу");
           }
         });
       }, 150);
