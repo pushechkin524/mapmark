@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Управление метками</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    #map { height: 100vh; width: 100%; }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const apiUrl = "https://mapmark.onrender.com/api/markers/";
+
+    const map = L.map("map").setView([55.751244, 37.618423], 11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+
+    async function loadMarkers() {
+      map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+
+      data.forEach((m) => {
+        const marker = L.marker([m.latitude, m.longitude]).addTo(map);
+        let html = `
+          <b>${m.title || ""}</b><p>${m.description || ""}</p>
+          <button class="delete-btn" onclick="deleteMarker(${m.id})">Удалить</button>
+        `;
+        marker.bindPopup(html);
+      });
+    }
+
+    async function deleteMarker(id) {
+      if (!confirm("Удалить метку?")) return;
+      const resp = await fetch(`${apiUrl}${id}/`, { method: "DELETE" });
+      if (resp.ok) {
+        alert("Удалено!");
+        loadMarkers();
+      } else {
+        alert("Ошибка при удалении");
+      }
+    }
+
+    loadMarkers();
+  </script>
+</body>
+</html>
