@@ -26,3 +26,10 @@ urlpatterns = [
     path('api/', include('markers.urls')),
     path('', TemplateView.as_view(template_name='frontend/index.html')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+<<<<<<< HEAD
+=======
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+>>>>>>> 4e91fb90 (Gthdfh)

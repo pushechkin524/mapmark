@@ -7,3 +7,7 @@ whitenoise
 psycopg2-binary
 django-cors-headers
 Pillow
+<<<<<<< HEAD
+=======
+django-cloudinary-storage
+>>>>>>> 4e91fb90 (Gthdfh)
